@@ -28,6 +28,42 @@ jobs:
           pip install flet supabase
 
       - name: Build do APK
+        run: yes | flet build apk
+
+      - name: Salvar o APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Auditoria-PCM-App
+          path: build/apk/*.apkname: Build APK Flet
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install flet supabase
+
+      - name: Build do APK
         run: flet build apk
 
       - name: Salvar o APK
