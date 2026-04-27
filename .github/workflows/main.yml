@@ -1,0 +1,31 @@
+name: Build APK Flet
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install flet supabase
+
+      - name: Build do APK
+        run: flet build apk
+
+      - name: Salvar o APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Auditoria-PCM-App
+          path: build/apk/*.apk
