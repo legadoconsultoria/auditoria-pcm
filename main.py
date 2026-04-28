@@ -96,11 +96,11 @@ def main(page: ft.Page):
     page.title = "Pesquisa PCM"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = "white"
-    
+    page.scroll = ft.ScrollMode.AUTO
     inicializar_banco_local()
     threading.Thread(target=sincronizar_votos, daemon=True).start()
 
-    lista_pesquisas = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+    lista_pesquisas = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll=ft.ScrollMode.AUTO)
     area_votacao = ft.Column(scroll=ft.ScrollMode.AUTO, spacing=20, visible=False)
 
     def atualizar_app(e):
@@ -119,13 +119,9 @@ def main(page: ft.Page):
     def registrar_voto(alt_id, cid_id):
         conexao = sqlite3.connect("banco_local.db"); cursor = conexao.cursor()
         cursor.execute("UPDATE alternativas SET votos = votos + 1 WHERE id = ?", (alt_id,))
-        cursor.execute("INSERT INTO fila_sincronizacao (alternativa_id, sincronizado) VALUES (?, 0)", (alt_id,))
+        cursor.execute("INSERT INTO fila_sincronizacao (alternativa_id) VALUES (?)", (alt_id,))
         conexao.commit(); conexao.close()
-        
-        # Mostra o aviso verde e permite a animação nativa do botão
-        page.snack_bar = ft.SnackBar(ft.Text("✅ Voto registrado!", color="white", weight="bold"), bgcolor="green", duration=1500)
-        page.snack_bar.open = True
-        page.update()
+        exibir_pesquisa(cid_id)
 
     def registrar_aberta(e, p_id, cid_id, tf):
         texto = tf.value.strip()
@@ -135,16 +131,11 @@ def main(page: ft.Page):
         existe = cursor.fetchone()
         if existe:
             cursor.execute("UPDATE alternativas SET votos = votos + 1 WHERE id = ?", (existe[0],))
-            cursor.execute("INSERT INTO fila_sincronizacao (alternativa_id, sincronizado) VALUES (?, 0)", (existe[0],))
+            cursor.execute("INSERT INTO fila_sincronizacao (alternativa_id) VALUES (?)", (existe[0],))
         else:
             cursor.execute("INSERT INTO alternativas (pergunta_id, texto_alternativa, votos) VALUES (?, ?, 1)", (p_id, texto))
-            cursor.execute("INSERT INTO fila_sincronizacao (alternativa_id, sincronizado) VALUES (?, 0)", (cursor.lastrowid,))
+            cursor.execute("INSERT INTO fila_sincronizacao (alternativa_id) VALUES (?)", (cursor.lastrowid,))
         conexao.commit(); conexao.close()
-        
-        # Mostra o aviso azul e recarrega a tela para exibir o novo botão
-        page.snack_bar = ft.SnackBar(ft.Text("✅ Nova resposta salva!", color="white", weight="bold"), bgcolor="blue", duration=1500)
-        page.snack_bar.open = True
-        
         exibir_pesquisa(cid_id)
 
     def exibir_pesquisa(cid_id):
